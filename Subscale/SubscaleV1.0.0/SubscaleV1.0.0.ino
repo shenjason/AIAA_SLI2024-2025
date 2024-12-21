@@ -33,13 +33,13 @@ void setup() {
   beep(2);
   
   // Serial3.println("freset");
-  Serial3.println("unmask GLO");
-  Serial3.println("unmask GAL");
-  Serial3.println("unmask BDS");
-  Serial3.println("unmask GPS");
-  Serial3.println("CONFIG COM1 115200 8 n 1");
-  Serial3.println("GPGGA 0.05");
-  Serial3.println("saveconfig");
+  // Serial3.println("unmask GLO");
+  // Serial3.println("unmask GAL");
+  // Serial3.println("unmask BDS");
+  // Serial3.println("unmask GPS");
+  // Serial3.println("CONFIG COM1 115200 8 n 1");
+  // Serial3.println("GPGGA 0.05");
+  // Serial3.println("saveconfig");
 
   if (!sgp.begin()){
     delay(1000);
@@ -47,24 +47,24 @@ void setup() {
     while (true) {};
   }
 
-  if (!SD.begin(BUILTIN_SDCARD)){
-    delay(1000);
-    beep(0.1);
-    delay(300);
-    beep(0.1);
-    while (true) {};
-  }
+  // if (!SD.begin(BUILTIN_SDCARD)){
+  //   delay(1000);
+  //   beep(0.1);
+  //   delay(300);
+  //   beep(0.1);
+  //   while (true) {};
+  // }
 
-  dataFile = SD.open("Data.csv", FILE_WRITE);
-  dataFile.print("Latitude(ddeg)");
-  dataFile.print(", ");
-  dataFile.print("Longitude(ddeg)");
-  dataFile.print(", ");
-  dataFile.print("TVOC(ppb\t)");
-  dataFile.print(", ");
-  dataFile.println("eCO2(ppm)");
+  // dataFile = SD.open("Data.csv", FILE_WRITE);
+  // dataFile.print("Latitude(ddeg)");
+  // dataFile.print(", ");
+  // dataFile.print("Longitude(ddeg)");
+  // dataFile.print(", ");
+  // dataFile.print("TVOC(ppb\t)");
+  // dataFile.print(", ");
+  // dataFile.println("eCO2(ppm)");
   
-  dataFile.close();
+  // dataFile.close();
 
   delay(1000);
   beep(0.1);
@@ -82,8 +82,8 @@ void setup() {
 }
 
 void loop() {
-  // char read = Serial3.read();
-  // Serial.print(read);
+  char read = Serial3.read();
+  Serial.print(read);
   UpdateGPS();
   UpdateMox();
 
@@ -96,7 +96,6 @@ void loop() {
     beep(0.1);
     delay(100);
     beep(0.1);
-    delay(100);
     fixticks = 0;
   }
 
@@ -145,6 +144,7 @@ void UpdateGPS(){
   char read = Serial3.read();
   bool done = parseSegment(read);
   if (done){
+    noparseticks = 0;
     Serial.print(segment_f);
     if (parseGPSNMEA()){
       if (!fix){
@@ -157,6 +157,7 @@ void UpdateGPS(){
     }
     return;
   }
+  noparseticks ++;
   return;
 }
 
@@ -197,18 +198,18 @@ bool parseGPSNMEA(){
       if (part[0] == '0') fix = false;
     }
 
-    if (i == 2 && part[0] != '\0'){
-      gpsLat = atoi(part[0] + part[1]) + (atof(part[2] + part[3] + part[4] + part[5] + part[6]) / 60.0);
-    }
-    if (i == 4 && part[0] != '\0'){
-      gpsLong = atoi(part[0] + part[1] + part[2]) + (atof(part[3] + part[4] + part[5] + part[6] + part[7]) / 60.0);
-    }
-    if (i == 3 && part[0] != '\0'){
-      gpsLatDir = part[0];
-    } 
-    if (i == 5 && part[0] != '\0'){
-      gpsLongDir = part[0];
-    }
+    // if (i == 2 && part[0] != '\0'){
+    //   gpsLat = atoi(part[0] + part[1]) + (atof(part[2] + part[3] + part[4] + part[5] + part[6]) / 60.0);
+    // }
+    // if (i == 4 && part[0] != '\0'){
+    //   gpsLong = atoi(part[0] + part[1] + part[2]) + (atof(part[3] + part[4] + part[5] + part[6] + part[7]) / 60.0);
+    // }
+    // if (i == 3 && part[0] != '\0'){
+    //   gpsLatDir = part[0];
+    // } 
+    // if (i == 5 && part[0] != '\0'){
+    //   gpsLongDir = part[0];
+    // }
     memset(part, 0, sizeof(part));
     if (segment_f[j] == '*') break;
     j++;
