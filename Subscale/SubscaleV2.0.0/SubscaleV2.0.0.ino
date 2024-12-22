@@ -3,47 +3,62 @@
 #include <SD.h>
 #include <SPI.h>
 
-#define BUZZER 23
+#define BUZZER 23 //Buzzer Output Pin
 
-Adafruit_SGP30 sgp;
+Adafruit_SGP30 sgp; //Mox Sensor
 
-char segment[300];
-char segment_f[300];
-bool newsegment;
-double gpsLat; double gpsLong;
-char gpsLatDir; char gpsLongDir;
-bool fix; bool isMoxData;
-int seg_i;
-int nofixticks; int fixticks; int noparseticks; int moxTicks;
-float TVOC; float eCO2;
-long prevTime;
+
+char segment[300]; char segment_f[300];
+
+// Data Variables
 elapsedMillis timeElapsed;
+double gpsLat; double gpsLong;//GPS Lattitude and Longitude in Decimal Degrees
+char gpsLatDir; char gpsLongDir;//Direction of GPS N/S E/W
+bool fix; bool isMoxData;// GPS fix and Mox data availibility
+float TVOC; float eCO2; //Mox Sensor Data: TVOC - Total Volatile Organic compounds(ppb\t), eCO2 - Equivalent CO2(ppm)
 
-File dataFile;
+bool newsegment;
+int seg_i;
+
+// Tick Variables for timing
+int nofixticks; int fixticks; int noparseticks; int moxTicks;
+long prevTime;
+
+File dataFile; // SD card file
 
 
 void setup() {
-  pinMode(BUZZER, OUTPUT);
+  // Start Serial connection
   Serial.begin(115200);
-  Serial3.begin(115200);
+  Serial3.begin(115200); //GPS Serial Connection
+  pinMode(BUZZER, OUTPUT);
 
+  // Initial
   beep(2);
-  
+
+  // GPS Initialization Commands
+
+  // Uncomment next line to reset GPS to default settings
   // Serial3.println("freset");
+  // For more commands vist
+  // https://drive.google.com/drive/folders/1RP-g-l8X-KwJOpTcQYS-juQpOMaA7P9b
   Serial3.println("unmask GLO");
   Serial3.println("unmask GAL");
   Serial3.println("unmask BDS");
   Serial3.println("unmask GPS");
-  Serial3.println("CONFIG COM1 115200 8 n 1");
-  Serial3.println("GPGGA 0.05");
+  Serial3.println("CONFIG COM1 115200 8 n 1"); //Port config
+  Serial3.println("GPGGA 0.05"); // Output GPGGA data at 50 hertz 
   Serial3.println("saveconfig");
 
+
+  //Initialize Mox Sensor
   if (!sgp.begin()){
     delay(1000);
     beep(0.1);
     while (true) {};
   }
 
+  //Initialize SD card
   if (!SD.begin(BUILTIN_SDCARD)){
     delay(1000);
     beep(0.1);
@@ -54,6 +69,7 @@ void setup() {
 
   dataFile = SD.open("Data.csv", FILE_WRITE);
 
+  // Write Header: Time Elapsed(miliseconds), Latitude(ddeg), Longitude(ddeg), TVOC(ppb\t), eCO2(ppm)
   dataFile.print("Time Elapsed(miliseconds)");
   dataFile.print(", ");
   dataFile.print("Latitude(ddeg)");
@@ -66,13 +82,14 @@ void setup() {
   
   dataFile.close();
 
+  // 3 quick beeps for initialization confirmation
   delay(1000);
   beep(0.1);
   delay(300);
   beep(0.1);
   delay(300);
   beep(0.1);
-
+  
   newsegment = false;
   nofixticks = 0;
   fixticks = 0;
@@ -87,22 +104,29 @@ void setup() {
 void loop() {
 
   UpdateGPS();
+
+  /* For some reason updating the mox sensor messes up the GPS serial communication and due to limited time
+    I was unable to fix it, and since the GPS data is more important I decided to disable the mox sensor
+  */
   // UpdateMox();
 
-  if (nofixticks > 80){
+  if (nofixticks > 80){ // If GPS has nofix
+    // Signle short beep
     beep(0.1);
     nofixticks = 0;
   }
+  
 
-  if (fixticks > 200){
+  if (fixticks > 200){ // If GPS has fix
+    // Double short beep
     beep(0.1);
     delay(100);
     beep(0.1);
     fixticks = 0;
   }
 
-  if (noparseticks > 80){
-    beep(0.5);
+  if (noparseticks > 80){ // If no available or vaild GPS data for a while
+    beep(0.5); // Long Beep
     noparseticks = 0;
   }
 
@@ -156,7 +180,7 @@ void UpdateGPS(){
   bool done = parseSegment(read);
   if (done){
     noparseticks = 0;
-    // Serial.println(segment_f); 
+    Serial.println(segment_f); 
     if (parseGPSNMEA()){
       if (!fix){
         nofixticks ++;
