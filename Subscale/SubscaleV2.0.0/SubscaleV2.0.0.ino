@@ -162,12 +162,17 @@ void loop() {
 void UpdateMox(){
   isMoxData = false;
   moxTicks++;
-  if  (!sgp.IAQmeasure() || moxTicks < 80) return;
+  if (moxTicks < 1000) return; 
+  if  (!sgp.IAQmeasure()) return;
   moxTicks = 0;
   isMoxData = true;
 
   TVOC = sgp.TVOC;
   eCO2 = sgp.eCO2;
+  // Serial.print(TVOC);
+  // Serial.print(", ");
+  // Serial.print(eCO2);
+  // Serial.println();
 }
 
 
@@ -180,7 +185,7 @@ void UpdateGPS(){
   bool done = parseSegment(read);
   if (done){
     noparseticks = 0;
-    Serial.println(segment_f); 
+    // Serial.println(segment_f); 
     if (parseGPSNMEA()){
       if (!fix){
         nofixticks ++;
@@ -255,8 +260,8 @@ bool parseGPSNMEA(){
     }
     index++;
   }
-  // Serial.println(gpsLat, 8);
-  // Serial.println(gpsLong, 8);
+  Serial.println(gpsLat, 8);
+  Serial.println(gpsLong, 8);
   return true;
 }
 
